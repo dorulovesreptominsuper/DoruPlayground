@@ -33,13 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle.State.STARTED
 import androidx.lifecycle.repeatOnLifecycle
 import com.doru.reptomin.playground.ui.theme.MyApplicationTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.doru.reptomin.playground.ui.MultiPreviews
 
 @Composable
 fun DataItemTypeScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeViewModel = hiltViewModel()) {
@@ -90,9 +90,7 @@ internal fun DataItemTypeScreen(
     }
 }
 
-// Previews
-
-@Preview(showBackground = true)
+@MultiPreviews
 @Composable
 private fun DefaultPreview() {
     MyApplicationTheme {
@@ -100,7 +98,7 @@ private fun DefaultPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 480)
+@MultiPreviews
 @Composable
 private fun PortraitPreview() {
     MyApplicationTheme {
