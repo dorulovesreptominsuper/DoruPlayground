@@ -24,7 +24,6 @@ import javax.inject.Inject
 
 interface DataItemTypeRepository {
     val dataItemTypes: Flow<List<String>>
-
     suspend fun add(name: String)
 }
 

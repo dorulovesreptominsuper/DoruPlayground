@@ -16,6 +16,12 @@
 
 package com.doru.reptomin.playground.ui.dataitemtype
 
+import com.doru.reptomin.playground.util.ExifUtil
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,10 +45,15 @@ import androidx.lifecycle.Lifecycle.State.STARTED
 import androidx.lifecycle.repeatOnLifecycle
 import com.doru.reptomin.playground.ui.theme.MyApplicationTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.ui.platform.LocalContext
 import com.doru.reptomin.playground.ui.MultiPreviews
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @Composable
-fun DataItemTypeScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeViewModel = hiltViewModel()) {
+fun DataItemTypeScreen(
+    modifier: Modifier = Modifier,
+    viewModel: DataItemTypeViewModel = hiltViewModel()
+) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val items by produceState<DataItemTypeUiState>(
         initialValue = DataItemTypeUiState.Loading,
@@ -62,6 +73,7 @@ fun DataItemTypeScreen(modifier: Modifier = Modifier, viewModel: DataItemTypeVie
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DataItemTypeScreen(
@@ -69,10 +81,62 @@ internal fun DataItemTypeScreen(
     onSave: (name: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var infos by remember { mutableStateOf("") }
+    var isPermissionGranted by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) { isGranted ->
+            if (!isGranted.containsValue(false)) {
+                // パーミッションが許可された場合の処理
+                isPermissionGranted = true
+            } else {
+                // パーミッションが拒否された場合の処理
+                Toast.makeText(context, "パーミッションくれ！！！！！！", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    val pickMedia =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val exifInterface =
+                        ExifUtil.getExifData(
+                            context,
+                            photoUri = uri
+                        )
+                    exifInterface?.let { exif ->
+                        exif.latLong?.forEach { latLong -> infos += " /  $latLong" }
+                    }
+                }
+            } else {
+                // no-op
+            }
+
+        }
+
     Column(modifier) {
+        Button(onClick = {
+            if (!isPermissionGranted) {
+                PermissionUtils.requestAccessMediaLocationPermission(context, permissionLauncher)
+            }
+            if (PermissionUtils.isAccessMediaLocationPermissionGranted(context)) {
+                // パーミッションが既に付与されている場合の処理
+                pickMedia.launch(arrayOf("image/*"))
+            }
+        }) {
+            Text(text = "写真を選んでね")
+        }
+        Text(text = infos)
+
         var nameDataItemType by remember { mutableStateOf("Compose") }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             TextField(
@@ -80,7 +144,9 @@ internal fun DataItemTypeScreen(
                 onValueChange = { nameDataItemType = it }
             )
 
-            Button(modifier = Modifier.width(96.dp), onClick = { onSave(nameDataItemType) }) {
+            Button(
+                modifier = Modifier.width(96.dp),
+                onClick = { onSave(nameDataItemType) }) {
                 Text("Save")
             }
         }
@@ -90,6 +156,7 @@ internal fun DataItemTypeScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @MultiPreviews
 @Composable
 private fun DefaultPreview() {
@@ -98,6 +165,7 @@ private fun DefaultPreview() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.Q)
 @MultiPreviews
 @Composable
 private fun PortraitPreview() {
